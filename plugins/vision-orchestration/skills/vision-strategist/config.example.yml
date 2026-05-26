@@ -1,0 +1,49 @@
+# vision-strategist reads the SAME `.claude/orchestrator-config.yml` as
+# vision-orchestrator. It needs `base_branch`, `vision_docs`, and
+# `labels.severity_order` / `labels.manual_skip` (already defined for the
+# executor). Below is the OPTIONAL `strategist:` block you can add to that file
+# to tune grooming. If the block is absent, these defaults apply.
+
+strategist:
+  # The standing "roadmap command center" issue carries this label. The skill
+  # rewrites that issue's body in place each pass and posts a dated changelog
+  # comment. Created on first run if missing.
+  report_issue_label: strategist-report
+
+  # Soft-delete label. "Remove" never closes an issue — it strips all
+  # `automation-*` labels (making the issue invisible to the executor) and adds
+  # this label + a rationale comment, for the human to triage. Created on first
+  # run if missing.
+  deletion_label: deletion-proposed
+
+  # An issue untouched for more than this many days, with no open dependents and
+  # not on the critical path, is a stale soft-delete candidate.
+  stale_days: 30
+
+  # How far back to look at closed issues when computing throughput + the
+  # meander index.
+  closed_lookback_days: 7
+
+  # Meander index = (meta + verify + self-generated closes) / (total closes)
+  # over the lookback window. Above this, the report's top recommendation
+  # becomes "drive the critical path; pause net-new verify/meta work," and the
+  # strategist demotes off-path verify/meta issues to automation-low.
+  meander_threshold: 0.6
+
+  # "Too big" split triggers (any one fires a split). Tune per project.
+  split_triggers:
+    max_diff_loc: 400 # empirical review-quality cliff
+    max_files: 3 # touching more than this = mixed concerns
+    max_acceptance_criteria: 5
+    max_sessions_without_done: 2 # long-task-low-progress = looping signal
+
+  # Combine triggers.
+  combine:
+    acceptance_overlap_pct: 70 # >= this overlap = near-duplicate → merge
+    fold_meta_followups: true # fold "add test/doc for #X" into #X's DoD
+
+  # Grooming cadence hint for unattended `/loop` runs. The strategist should
+  # groom less often than the executor iterates, so it reorganizes a backlog
+  # that has actually moved. (Informational; the loop interval is set by the
+  # `/loop` invocation.)
+  groom_every: 6h

@@ -1,0 +1,15 @@
+{
+  "name": "lloyd-skills",
+  "owner": {
+    "name": "Lloyd Ho",
+    "email": "lloydho@gmail.com"
+  },
+  "description": "Personal Claude Code skills — agentic project orchestration.",
+  "plugins": [
+    {
+      "name": "vision-orchestration",
+      "source": "./plugins/vision-orchestration",
+      "description": "Two-tier autonomous project orchestration over a GitHub-Issues backlog: vision-strategist (high-level backlog grooming + prioritization) and vision-orchestrator (per-task executor)."
+    }
+  ]
+}
