@@ -129,14 +129,58 @@ unverified external-version claim; treat it as a `BEHAVIORAL_CONTRADICTION` if
 the claim is load-bearing (e.g. a preflight version-floor), or a
 `DOC_ONLY_DRIFT` if the claim is incidental and the rest of the plan stands.
 
+## Vision-integrity axes (score these explicitly)
+
+The vision baseline is more than the behavior text — it also includes the
+project's accumulated decisions (`docs/decisions/*`), existing in-repo
+structure (modules, dependencies, first-party tools the project owns), the
+current phase target per the roadmap, and the codebase's stated minimalism
+(`CLAUDE.md`). Approaches that diverge from those without justification cost
+cycles that behavior-only checks silently approve. **For every plan / diff,
+score these four axes explicitly:**
+
+1. **Decision conformance.** Does the artifact re-decide anything settled in
+   `docs/decisions/`? If yes, cite the decision doc + the deviation and
+   require a justification.
+2. **Reuse conformance.** Does the artifact introduce a new dependency, new
+   in-repo module, or new external service for a domain already covered by
+   an existing dep, in-repo module, or first-party tool the project owns?
+   The vision-doc references and `package.json` are the baseline. If yes,
+   name the overlap and require a justification.
+3. **Scope conformance.** Is the work scoped to the current phase target per
+   `vision_docs`' roadmap? A Phase-0.5 issue that ships Phase-1 scaffolding
+   is scope creep even if the scaffolding aligns with the long-term vision.
+4. **Abstraction conformance.** Per `CLAUDE.md` ("Don't add features,
+   refactor, or introduce abstractions beyond what the task requires"), does
+   the artifact add abstractions, helpers, or future-proofing the task does
+   not currently need?
+
+Return `CONFORMS` / `DEVIATES` / `UNCLEAR` for each axis. Any `DEVIATES`
+raises the overall verdict to at least `APPROACH_DEVIATION` below.
+
+This is a checklist of axes you must **think about** — not a blocklist of
+specific patterns. The point of axes-not-keywords: the next novel deviation
+is not in any list; the axes generalize. Most artifacts conform on all four;
+report honestly when they do.
+
 ## What to decide
 
 Compare the artifact to the vision baseline only. Ignore style and
 code-quality (other gates own that). Return exactly one verdict:
 
-- `ALIGNED` — delivers the vision intent without contradicting it.
+- `ALIGNED` — delivers the vision intent without contradicting it AND
+  conforms on all four integrity axes.
 - `DOC_ONLY_DRIFT` — behavior/plan is acceptable, but a vision doc describes
   it inaccurately or is now stale. Name each doc location.
+- `APPROACH_DEVIATION` — the behavior matches the vision, BUT the artifact
+  deviates from accumulated decisions / existing structure / current phase
+  scope / project minimalism on at least one integrity axis. Name the axis
+  and the deviation. Treated like `BEHAVIORAL_CONTRADICTION` for blocking
+  purposes — a `type:decision` is filed and the task pauses. Examples that
+  fit here, not `BEHAVIORAL_CONTRADICTION`: a plan adds a new PDF parser
+  when a first-party PDF tool is named in `docs/decisions/`; a Phase-0.5
+  issue ships Phase-1 scaffolding alongside; a plan re-architects the data
+  layer when `docs/decisions/01-tech-stack.md` settled it.
 - `BEHAVIORAL_CONTRADICTION` — the plan/code does something the vision says
   it should not (or omits something the vision requires), OR makes an
   unverified external-version claim that is load-bearing. This is the
@@ -145,14 +189,21 @@ code-quality (other gates own that). Return exactly one verdict:
 ## Report back (exact format)
 
 ```
-VERDICT: ALIGNED | DOC_ONLY_DRIFT | BEHAVIORAL_CONTRADICTION
+VERDICT: ALIGNED | DOC_ONLY_DRIFT | APPROACH_DEVIATION | BEHAVIORAL_CONTRADICTION
+DECISION_CONFORMANCE: CONFORMS | DEVIATES <file:line ↔ decision-doc:line> | UNCLEAR <why>
+REUSE_CONFORMANCE: CONFORMS | DEVIATES <new dep/module + existing overlap location> | UNCLEAR <why>
+SCOPE_CONFORMANCE: CONFORMS | DEVIATES <phase target + scope-creep evidence> | UNCLEAR <why>
+ABSTRACTION_CONFORMANCE: CONFORMS | DEVIATES <abstraction + why it's premature> | UNCLEAR <why>
 EVIDENCE: <artifact location (plan step | file:line)> ↔ <vision file:line + quoted excerpt>
-EXPLANATION: <2–4 sentences: why this is/ isn't a contradiction>
+EXPLANATION: <2–4 sentences: why this is/ isn't a contradiction or deviation>
 DOC_FIXES: <for DOC_ONLY_DRIFT: each doc path + what to correct; else "none">
-QUESTION: <for BEHAVIORAL_CONTRADICTION: the one precise decision the human must make; else "none">
+QUESTION: <for APPROACH_DEVIATION or BEHAVIORAL_CONTRADICTION: the one precise decision the human must make; else "none">
 EXTERNAL_VERSION_CLAIMS: <each version claim in the plan + its citation status (verified <source> | UNCERTAIN); else "none">
-CONFIDENCE: <high | medium | low — low/medium contradictions are reported, not acted on>
+CONFIDENCE: <high | medium | low — low/medium reports are reported, not acted on>
 ```
 
-Only `BEHAVIORAL_CONTRADICTION` with `CONFIDENCE: high` blocks the task. Do
+Only `APPROACH_DEVIATION` or `BEHAVIORAL_CONTRADICTION` with `CONFIDENCE: high`
+blocks the task. The axes-checklist exists to make you look, not to find
+something to flag — an honest `ALIGNED` (with all four axes `CONFORMS`) is the
+common, correct answer for most plans. Do
 not invent contradictions; an honest `ALIGNED` is the common, correct answer.

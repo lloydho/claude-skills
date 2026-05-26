@@ -1,7 +1,7 @@
 {
   "name": "vision-orchestration",
   "description": "Two-tier autonomous project orchestration for GitHub-Issues-backed roadmaps. vision-strategist holds the whole vision + backlog and grooms it (reprioritize / split / combine / soft-remove); vision-orchestrator executes one task per invocation via worktree-isolated subagents. Both read the project's .claude/orchestrator-config.yml.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Lloyd Ho"
   },

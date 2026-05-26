@@ -326,12 +326,26 @@ rev-parse origin/<base_branch>`) for the implementer brief.
 3. **Plan-vs-vision gate.** Spawn a fresh-context review subagent with the
    _vision-review brief_ (`reference/task-brief.md` §"Vision-review brief"),
    baseline `vision_docs`: does this plan deliver what the vision intends
-   _without contradicting it_? Verify any external-version claim (Node, library
-   version, browser API) cites an authoritative source; unverified version
-   claims fail the gate. If misaligned → revise the plan and re-gate. If it
-   exposes a genuine vision ambiguity → file a new `type:decision` issue,
-   write the artifact, flip this issue's label to `manual-decision`, stop.
-   Catching divergence here is far cheaper than after code.
+   _without contradicting it_, AND does it conform on the four integrity
+   axes (Decision / Reuse / Scope / Abstraction conformance — see the brief)?
+   Verify any external-version claim (Node, library version, browser API)
+   cites an authoritative source; unverified version claims fail the gate.
+   Handle the verdict:
+   - `ALIGNED` → proceed.
+   - `DOC_ONLY_DRIFT` → proceed; reconcile the doc in Step 4b.
+   - `APPROACH_DEVIATION` → the plan's behavior matches but its approach
+     deviates from accumulated decisions / existing structure / phase scope
+     / minimalism on at least one integrity axis. **Do not approve unattended.**
+     File a new `type:decision` issue naming the axis + the deviation, flip
+     this issue's label to `manual-decision`, stop. (Common cases: a new
+     dependency overlapping a first-party tool the project owns; scope
+     creep into a later phase; premature abstraction.)
+   - `BEHAVIORAL_CONTRADICTION` → file a new `type:decision` issue, flip
+     this issue's label to `manual-decision`, stop.
+
+   If the gate exposes a genuine vision ambiguity (rather than a deviation),
+   file a `type:decision`, write the artifact, flip to `manual-decision`,
+   stop. Catching divergence here is far cheaper than after code.
 4. Fill `reference/task-brief.md` (implementer brief) with this issue's
    objective (from its body), acceptance, file scope, boundaries,
    `gate_commands` from the config, and — critically — the **per-issue
@@ -346,10 +360,20 @@ rebase origin/<branch>` before starting and to report the observed HEAD.
 7. Run each review skill in the issue's `reviews:*` labels; address findings.
 8. **Drift-review gate.** Spawn a fresh-context review subagent with the
    vision-review brief: does the _actual merged behavior/diff_ match
-   `vision_docs`? Classify the verdict:
+   `vision_docs`, AND does it conform on the four integrity axes (Decision /
+   Reuse / Scope / Abstraction — see the brief)? Classify the verdict:
    - **aligned** → proceed.
    - **doc-only drift** (behavior is fine; docs describe it wrongly/stalely)
      → proceed; reconcile the docs in Step 4b.
+   - **approach deviation** (behavior matches, but the implementation deviates
+     on at least one integrity axis — e.g. a new dep pulled in when a
+     first-party tool is named in a decision doc; abstraction the task did
+     not require; scope creep beyond phase target) → **do not open the PR.**
+     File a new `type:decision` issue naming the axis + the deviation +
+     `file:line` evidence + the precise question (refactor vs. amend the
+     decision doc). Add `- [ ] #<new-decision>` to this issue's task-list
+     (it stays open, blocked). Commit on the per-issue branch, push, comment
+     on the issue with the blocker, stop.
    - **behavioral contradiction** (code does the opposite of the vision, e.g.
      a gate enforced in the wrong place) → **do not open the PR.** File a
      new `type:decision` issue capturing the conflict. Evidence is the
