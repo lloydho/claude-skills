@@ -1,0 +1,66 @@
+# vision-orchestrator — Project config schema
+#
+# At runtime this lives at `.claude/orchestrator-config.yml` in the target repo
+# (committed). `init` writes it if missing. This file documents every key.
+#
+# The task store is GitHub Issues — accessed via the `gh` CLI. There is no
+# markdown ledger to edit.
+
+# Branch the orchestrator commits/merges task work onto.
+branch: main
+
+# Globs for the source-of-truth roadmap docs the orchestrator must keep in
+# mind to hold the end-to-end vision. These are also the authoritative
+# baseline for both drift gates (plan-vs-vision and post-implementation drift
+# review) and the per-cycle doc reconciliation — keep them accurate.
+vision_docs:
+  - docs/*plan*.md
+  - docs/ADR-*.md
+
+# Ordered verification sequence. Run in order on every `type:code` issue; any
+# failure is root-cause work, never bypassed. Use the project's real commands.
+gate_commands:
+  - npm run format
+  - npm run build
+  - npm run type-check
+  - npm run test
+  - npm run lint
+
+# How to record that review skills ran (satisfies any pre-push/CI review gate).
+# Free text the orchestrator follows literally. Use "none" if the project has
+# no review-evidence requirement.
+review_evidence: >
+  Add a `Reviewed-by: <skills,run>` git trailer to the top commit
+  (enforced by .husky/pre-push). Never use SKIP_REVIEW_CHECK=1.
+
+# Push/PR autonomy at the integration boundary:
+#   checkpoint  — commit locally, then stop and report (safest; default)
+#   auto-push   — also push the branch
+#   auto-pr     — also open/advance a pull request (multi-issue PR; the issue
+#                 timeline is still the source of truth)
+autonomy: checkpoint
+
+# Storage substrate. Always `github-issues` after the gh-CLI migration.
+storage: github-issues
+
+# Label schema (compound action-class + severity tags). The orchestrator only
+# picks issues whose state is `open` AND that carry an `automation-*` label.
+# Issues with a `manual-*` label are skipped. Severity ordering for pickup:
+#   automation-crit > automation-high > automation-medium > automation-low
+#   > automation-verify (always last; matches the old tier-3 verify-last rule)
+#
+# Type labels: type:code / type:decision / type:feel / type:external /
+#   type:verify — selects the per-task workflow.
+#
+# Reviews: reviews:review / reviews:security-review / reviews:simplify
+#   — required review skills per issue.
+labels:
+  severity_order:
+    - automation-crit
+    - automation-high
+    - automation-medium
+    - automation-low
+    - automation-verify
+  manual_skip:
+    - manual-decision
+    - manual-task
