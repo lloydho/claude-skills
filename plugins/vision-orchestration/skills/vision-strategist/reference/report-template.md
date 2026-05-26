@@ -19,7 +19,7 @@ The fewest things only **you** can do, ranked by how much downstream work each
 unblocks. Everything else is either automated or waiting on these.
 
 1. **#<N> — <title>** — <one line: what to do + what it unblocks (e.g. "register
-   the @eduplay npm org → unblocks #72 publish → unblocks 3 Track-J ports")>.
+   the @your-org npm org → unblocks #72 publish → unblocks 3 Track-J ports")>.
 2. **#<N> — <title>** — <…>
 3. …
 

@@ -1,8 +1,7 @@
 {
   "name": "lloyd-skills",
   "owner": {
-    "name": "Lloyd Ho",
-    "email": "lloydho@gmail.com"
+    "name": "Lloyd Ho"
   },
   "description": "Personal Claude Code skills — agentic project orchestration.",
   "plugins": [
