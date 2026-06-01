@@ -40,6 +40,26 @@ smallest item that unblocks the most downstream work (or unblocks the human)._
    - **Meander index** = `meta+verify+self-generated / total closed`. A
      sustained index > ~0.6 means the loop is grooming/auditing itself faster
      than it ships vision — the canonical meandering signal.
+   - **Goal-output-shipped** (new) = closed issues whose declared
+     `PDF-deliverable:` (or analogous goal-anchor output field) actually
+     produced the deliverable on disk + the validation evidence the goal
+     anchor enumerates (cited authority + self-check + attack-fixture
+     pass). When the project's vision-doc declares a "THE GOAL" anchor
+     this metric is the canonical "are we moving toward the user
+     outcome" signal. **Goal-output-shipped is the metric the
+     four-axis vision check cannot infer from labels — it requires
+     actually looking at whether the artifact exists.** A sustained
+     `goal-output-shipped = 0` while issues are still closing IS the
+     meander pattern even if `Meander index` is low, because every
+     close is "internal code" not "user-facing deliverable."
+5. **Check goal-link contract compliance** (when the project's vision-doc
+   declares a "THE GOAL" anchor). Scan each open `type:code` issue body
+   for the goal-link fields the anchor enumerates (typically `Goal-link:`,
+   an output-deliverable field, `Validation:`, `Done-when:`). Issues
+   missing those fields are candidates for Operation 4 (soft-remove) per
+   the new "Goal-link-absent" criterion. This is the structural filter
+   that prevents code-for-code's-sake issues from sitting in the
+   eligible-now queue indefinitely.
 
 ---
 
@@ -167,6 +187,17 @@ actually closes. This makes removal fully reversible.
 - **Stale** — untouched > T days (default 30) AND no open dependents AND not on
   the critical path.
 - **Absorbed** — merged into a canonical issue by Operation 2.
+- **Goal-link-absent** (new) — when the project's vision-doc declares a
+  "THE GOAL" anchor and the issue is `type:code`, the issue body lacks
+  the goal-link fields the anchor enumerates (commonly `Goal-link:`,
+  output-deliverable, `Validation:`, `Done-when:`). These are the
+  pure-internal "code-for-code's-sake" candidates that meander.
+  Soft-remove with the rationale citing the missing fields + a link to
+  the goal anchor. The human triages: either the fields get added (and
+  the issue is reinstated by re-adding `automation-*`) or the issue is
+  confirmed off-track (closed). `type:verify`, `type:decision`,
+  `type:feel`, `type:external` are exempt — only `type:code` needs the
+  fields.
 
 **Pitfalls (hard guards):**
 
@@ -184,13 +215,27 @@ actually closes. This makes removal fully reversible.
 
 ## Definition of Done & anti-meandering (cross-cutting)
 
-- Encode "done" as **tests pass + every acceptance criterion met**, and fold
-  meta/verification follow-ups into their parent's DoD (Op 2) so they cannot
-  spawn an endless self-generated micro-queue.
+- Encode "done" as **tests pass + every acceptance criterion met + (when the
+  vision-doc declares a THE GOAL anchor) the declared deliverable observed +
+  validation evidence on file**, and fold meta/verification follow-ups into
+  their parent's DoD (Op 2) so they cannot spawn an endless self-generated
+  micro-queue.
 - If the **meander index** exceeds ~0.6 for two consecutive passes, the report's
   top recommendation is "pause net-new verify/meta work; drive the critical
   path," and the strategist demotes off-path verify/meta issues to
   `automation-low`.
+- If **goal-output-shipped is 0** for two consecutive passes WHILE other
+  issues are closing (i.e., the loop is shipping internal code but no
+  user-facing deliverables), the report's top recommendation overrides
+  the meander recommendation with: "**we're shipping internal-only code;
+  no goal-anchor deliverable has been produced this groom window.** Install
+  the goal-output toolchain (e.g. tectonic/pdf-filler for PDF goals; the
+  build pipeline for service-deployment goals), OR file a
+  `type:decision` issue capturing the toolchain gap, OR escalate to the
+  user." This guard is what catches "the loop ships LaTeX templates that
+  have never been compiled, AcroForm composers that have never been
+  filled" — the failure mode the four-axis vision check cannot detect
+  from labels alone.
 - Keep every executor change small and vertically sliced (Op 3) — this is the
   second-biggest lever and the one that most directly buys "minimal bugs,"
   because small changes are easier to review and to revert.
