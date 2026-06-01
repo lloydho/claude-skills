@@ -134,10 +134,12 @@ the claim is load-bearing (e.g. a preflight version-floor), or a
 The vision baseline is more than the behavior text — it also includes the
 project's accumulated decisions (`docs/decisions/*`), existing in-repo
 structure (modules, dependencies, first-party tools the project owns), the
-current phase target per the roadmap, and the codebase's stated minimalism
-(`CLAUDE.md`). Approaches that diverge from those without justification cost
-cycles that behavior-only checks silently approve. **For every plan / diff,
-score these four axes explicitly:**
+current phase target per the roadmap, the codebase's stated minimalism
+(`CLAUDE.md`), AND the canonical "THE GOAL" anchor at the top of the
+project's primary vision doc (if one is declared). Approaches that diverge
+from those without justification cost cycles that behavior-only checks
+silently approve. **For every plan / diff, score these five axes
+explicitly:**
 
 1. **Decision conformance.** Does the artifact re-decide anything settled in
    `docs/decisions/`? If yes, cite the decision doc + the deviation and
@@ -154,13 +156,41 @@ score these four axes explicitly:**
    refactor, or introduce abstractions beyond what the task requires"), does
    the artifact add abstractions, helpers, or future-proofing the task does
    not currently need?
+5. **Goal advancement.** Does shipping this task put the project measurably
+   closer to **THE GOAL** stated at the top of the primary vision doc? This
+   is the axis that catches the failure mode where every other axis returns
+   CONFORMS but the project ships pure-internal code that does not move
+   toward any user-facing outcome. Concretely:
+   - Does the issue body declare the goal-link fields the project's goal
+     anchor enumerates (commonly `Goal-link:`, an output-deliverable field
+     like `PDF-deliverable:` when the goal is artifact-shaped,
+     `Validation:`, and `Done-when:`), and does the plan/diff actually
+     deliver each? Issues missing those fields are a DEVIATES — file the
+     missing-anchor question rather than letting the issue ship.
+   - When the goal is output-shaped (rendered artifact + validation
+     record), does the plan ACTUALLY produce that output as part of the
+     gate — not just "code that could produce it later"? Test-suite-green
+     is necessary but not sufficient; the output must be observable on
+     disk (or wherever the goal anchor specifies) by end of the task.
+   - Does the validation evidence (cited authority, self-check pass,
+     attack-fixture pass — whatever the goal anchor enumerates) actually
+     exist for the deliverable?
+
+   If the project's vision doc does not (yet) have a "THE GOAL" anchor,
+   report `UNCLEAR` here with a note that the goal anchor needs to be
+   added — do not silently CONFORMS by absence. A missing goal anchor is
+   itself a vision-doc gap the orchestrator should surface as a
+   `type:decision`.
 
 Return `CONFORMS` / `DEVIATES` / `UNCLEAR` for each axis. Any `DEVIATES`
-raises the overall verdict to at least `APPROACH_DEVIATION` below.
+raises the overall verdict to at least `APPROACH_DEVIATION` below. A
+DEVIATES on `Goal advancement` is the most expensive to miss — it
+surfaces "we are shipping code that does not move toward the user
+outcome," which is the meander mode no other axis catches.
 
 This is a checklist of axes you must **think about** — not a blocklist of
 specific patterns. The point of axes-not-keywords: the next novel deviation
-is not in any list; the axes generalize. Most artifacts conform on all four;
+is not in any list; the axes generalize. Most artifacts conform on all five;
 report honestly when they do.
 
 ## What to decide
@@ -169,7 +199,7 @@ Compare the artifact to the vision baseline only. Ignore style and
 code-quality (other gates own that). Return exactly one verdict:
 
 - `ALIGNED` — delivers the vision intent without contradicting it AND
-  conforms on all four integrity axes.
+  conforms on all five integrity axes (including Goal advancement).
 - `DOC_ONLY_DRIFT` — behavior/plan is acceptable, but a vision doc describes
   it inaccurately or is now stale. Name each doc location.
 - `APPROACH_DEVIATION` — the behavior matches the vision, BUT the artifact
@@ -194,6 +224,7 @@ DECISION_CONFORMANCE: CONFORMS | DEVIATES <file:line ↔ decision-doc:line> | UN
 REUSE_CONFORMANCE: CONFORMS | DEVIATES <new dep/module + existing overlap location> | UNCLEAR <why>
 SCOPE_CONFORMANCE: CONFORMS | DEVIATES <phase target + scope-creep evidence> | UNCLEAR <why>
 ABSTRACTION_CONFORMANCE: CONFORMS | DEVIATES <abstraction + why it's premature> | UNCLEAR <why>
+GOAL_ADVANCEMENT: CONFORMS <goal anchor cited + deliverable observed + validation evidence cited> | DEVIATES <missing goal-link field / no output produced / no validation evidence / unrelated to THE GOAL> | UNCLEAR <no goal anchor in vision doc, or deliverable not yet observable>
 EVIDENCE: <artifact location (plan step | file:line)> ↔ <vision file:line + quoted excerpt>
 EXPLANATION: <2–4 sentences: why this is/ isn't a contradiction or deviation>
 DOC_FIXES: <for DOC_ONLY_DRIFT: each doc path + what to correct; else "none">

@@ -67,6 +67,18 @@ current spec. There is no markdown ledger to edit.
   actually shipped, the same way a doc-vs-reality audit would.
 - **Discovered work is filed as its own issue, not absorbed inline.** See
   "Discovered work" under Step 3.
+- **Every task must advance THE GOAL.** If the project's primary
+  `vision_docs` file declares a "THE GOAL" anchor, every `type:code`
+  issue picked must declare which sub-goal it advances and produce the
+  deliverable the goal anchor enumerates (PDF, deployed artifact,
+  rendered report, etc.) as part of the gate sequence. Test-suite-green
+  is necessary but not sufficient — the deliverable must be observable
+  on disk by gate completion. See Step 2b check 4 (goal-link presence
+  filter) and Step 3 `type:code` Step 6a (goal-output gate). The
+  Goal advancement axis in the vision-review brief is what makes a
+  drift-review gate catch "shipping code that doesn't move toward the
+  user outcome" — the meander mode the other four axes silently
+  approve.
 
 ## Step 1 — Load config & verify state
 
@@ -146,7 +158,19 @@ For each candidate, in order:
      orchestrator's task universe, e.g. an upstream tracking issue or a non-task
      issue.)
    - If `state: closed` → dep is resolved.
-4. The first candidate that passes all three checks is the pick.
+4. **Goal-link presence check.** If the project's primary `vision_docs` file
+   declares a "THE GOAL" anchor (a top-level section explicitly named "THE
+   GOAL" or equivalent — many projects do not, in which case this check is
+   skipped and reported as the absence in the next strategist groom), the
+   issue body must declare the goal-link fields the goal anchor enumerates
+   (commonly `Goal-link:`, an output-deliverable field, `Validation:`, and
+   `Done-when:`). Issues missing those fields are **ineligible**: skip,
+   comment on the issue asking the filer (or strategist) to add them, and
+   move to the next candidate. This is the structural filter that prevents
+   "code-for-code's-sake" issues from being picked. Verify-task issues
+   (`type:verify`) and decision/feel/external issues are exempt — only
+   `type:code` issues need goal-link fields.
+5. The first candidate that passes all four checks is the pick.
 
 ### 2c — Effort scaling
 
@@ -326,8 +350,13 @@ rev-parse origin/<base_branch>`) for the implementer brief.
 3. **Plan-vs-vision gate.** Spawn a fresh-context review subagent with the
    _vision-review brief_ (`reference/task-brief.md` §"Vision-review brief"),
    baseline `vision_docs`: does this plan deliver what the vision intends
-   _without contradicting it_, AND does it conform on the four integrity
-   axes (Decision / Reuse / Scope / Abstraction conformance — see the brief)?
+   _without contradicting it_, AND does it conform on the five integrity
+   axes (Decision / Reuse / Scope / Abstraction / Goal advancement — see
+   the brief)? The Goal advancement axis is the one that catches
+   "shipping code that doesn't move toward the user outcome"; if the
+   project's vision doc declares a THE GOAL anchor and the plan can't
+   point to which sub-goal it advances + the deliverable it produces,
+   the gate returns DEVIATES on that axis.
    Verify any external-version claim (Node, library version, browser API)
    cites an authoritative source; unverified version claims fail the gate.
    Handle the verdict:
@@ -357,11 +386,43 @@ rebase origin/<branch>` before starting and to report the observed HEAD.
    `subagent_type: general-purpose`. The filled brief is the entire prompt.
 6. On return, **do not trust the summary**. Inspect the actual diff in the
    returned worktree path. Run `gate_commands` in order against it.
+6a. **Goal-output gate (NEW).** Test-suite-green is necessary but NOT
+   sufficient. If the project's vision-doc THE GOAL anchor specifies an
+   output-shaped deliverable (rendered PDF, deployed artifact, generated
+   report, built binary, etc.) AND the issue's `PDF-deliverable:` (or
+   analogous) field names a specific instance of that deliverable AND
+   this task's diff contributes code that would produce that instance,
+   the orchestrator MUST execute the goal-output rendering against a
+   real fixture before allowing the PR to open. Examples by goal shape:
+   - **Goal = court-acceptable PDFs:** for any diff touching
+     `src/notices/templates/**`, `src/forms/field-maps/**`, the notice
+     renderer, or a composer, run the project's render command (often
+     `tectonic` for LaTeX or the pdf-filler MCP for AcroForm) against a
+     fixture case, assert exit-0, assert the output is a valid PDF
+     (`pdfinfo` opens it), assert expected slot values appear
+     (`pdftotext` grep), and run the issue's attack-fixture suite if
+     declared. Failure = blocker; file the missing-toolchain or broken-
+     render as a `automation-crit` finding and stop.
+   - **Goal = deployed app:** for any diff touching a service entry-
+     point, build the image AND run the service against a smoke probe.
+   - **Goal = generated report:** render the report against a fixture
+     and assert the expected sections appear.
+
+   The `gate_commands` config SHOULD list the project's goal-output
+   render command(s); if it doesn't and a goal-output gate would apply,
+   that gap is itself a blocker — file it and pause.
 7. Run each review skill in the issue's `reviews:*` labels; address findings.
 8. **Drift-review gate.** Spawn a fresh-context review subagent with the
    vision-review brief: does the _actual merged behavior/diff_ match
-   `vision_docs`, AND does it conform on the four integrity axes (Decision /
-   Reuse / Scope / Abstraction — see the brief)? Classify the verdict:
+   `vision_docs`, AND does it conform on the five integrity axes
+   (Decision / Reuse / Scope / Abstraction / Goal advancement — see the
+   brief)? The brief instructs the subagent to score Goal advancement
+   with **observed-deliverable evidence** — i.e., for an output-shaped
+   goal anchor, did Step 6a actually produce the artifact on disk, and
+   does the validation evidence (cited authority + self-check pass +
+   attack-fixture pass) exist? An absent artifact or absent validation
+   evidence is DEVIATES regardless of test-suite status. Classify the
+   verdict:
    - **aligned** → proceed.
    - **doc-only drift** (behavior is fine; docs describe it wrongly/stalely)
      → proceed; reconcile the docs in Step 4b.
