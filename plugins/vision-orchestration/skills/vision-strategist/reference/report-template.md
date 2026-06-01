@@ -32,8 +32,35 @@ unblocks. Everything else is either automated or waiting on these.
 - **Meander index:** <0.NN> (<meta+verify+self-generated> of <total> recent
   closes were not vision-advancing). <"⚠️ above threshold — grooming/auditing
   faster than shipping" | "healthy">.
+- **Goal-output-shipped:** <n>/<total closed> recent closes produced their
+  declared deliverable on disk + validation evidence (when the project
+  declares a "THE GOAL" anchor). <"⚠️ 0 deliverables shipped this window —
+  loop is shipping internal-only code; install the goal-output toolchain or
+  escalate" | "healthy">. Omit this line entirely when no goal anchor is
+  declared.
 - **Critical path head:** <#N — title> (the next thing that must ship).
 - **Executor runway:** <n eligible-now issues> ready to pick.
+
+## 🎯 Goal-output coverage
+
+_Render this section only when the project's `vision_docs` declares a "THE
+GOAL" anchor. Omit otherwise._
+
+Per-deliverable status against the goal anchor — the at-a-glance answer to
+"how far from THE GOAL are we?":
+
+| Deliverable                  | Produced? | Authority cited? | Attack-fixtures pass? | Issue   |
+| ---------------------------- | --------- | ---------------- | --------------------- | ------- |
+| <e.g. "3-day pay-or-quit">   | ✅        | ⚠️ verify        | ❌ (no MtQ fixture)   | #…      |
+| <e.g. "UD-100 complaint">    | ❌        | ❌               | ❌                    | #…      |
+| <e.g. "UD-110 judgment">     | ⚠️ code   | ❌               | ❌                    | #…      |
+| …                            |           |                  |                       |         |
+
+Status legend: ✅ shipped + verified; ⚠️ partial (e.g., code lands but
+deliverable not produced on disk, or only some fixtures pass); ❌ missing.
+Rows come from the goal anchor's deliverable enumeration; ordering follows
+the user-facing pipeline (notice → complaint → service → judgment → writ →
+lockout in a PDF-shaped goal).
 
 ## 🧭 Critical path to <release milestone>
 
@@ -82,3 +109,14 @@ Guidance for filling it:
 - **Meander index** ties directly to the user's original concern (the orchestrator
   looping). Call it out explicitly when it's high, and name which off-path
   verify/meta issues you demoted because of it.
+- **Goal-output-shipped** is the more expensive signal. When it's 0 while
+  issues are still closing — the loop is shipping pure-internal code and
+  producing no user-facing deliverable, the failure mode the four-axis
+  vision check cannot detect. When this fires, the report's top
+  recommendation should override every other recommendation with:
+  "**Install the goal-output toolchain** (e.g. tectonic / pdf-filler MCP /
+  the build pipeline) OR file a `type:decision` for the toolchain gap OR
+  escalate to the user." Name the specific shipped issues whose
+  deliverables were never produced as evidence.
+- **Goal-output coverage table** is the at-a-glance scoreboard. Each pass,
+  diff against the prior pass and call out which rows moved.

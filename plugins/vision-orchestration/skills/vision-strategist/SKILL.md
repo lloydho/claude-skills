@@ -165,8 +165,23 @@ Per `reference/grooming-criteria.md` "The model":
    Locked issues (and their parents/children) are **read-only** this pass.
 
 6. **Compute health**: % of milestones complete, throughput (closed in lookback
-   window), and the **meander index** (`meta+verify+self-generated / total
-closed`).
+   window), the **meander index** (`meta+verify+self-generated / total
+closed`), AND **goal-output-shipped** (count of closes whose declared
+   `PDF-deliverable:` / output-deliverable was actually produced on disk with
+   validation evidence per the goal anchor — see grooming-criteria.md §"The
+   model" step 4). For projects with a "THE GOAL" anchor declared in
+   `vision_docs`, `goal-output-shipped` is the canonical "are we moving
+   toward the user outcome" signal and trumps the meander index when it
+   stays at 0 while issues are closing — see grooming-criteria.md
+   §"Definition of Done & anti-meandering".
+7. **Scan goal-link contract compliance** (when the project's vision-doc
+   declares a "THE GOAL" anchor). For each open `type:code` issue, check
+   that the body declares the goal-link fields the anchor enumerates
+   (commonly `Goal-link:`, an output-deliverable field, `Validation:`,
+   `Done-when:`). Mark missing-fields issues as `Goal-link-absent`
+   candidates for Operation 4 (soft-remove). This is the structural
+   filter that prevents code-for-code's-sake issues from sitting in the
+   eligible-now queue indefinitely.
 
 This model is the shared substrate for all four operations and the report. Build
 it once.
@@ -231,10 +246,22 @@ For each issue meeting a Remove criterion **and** having no open dependents:
 gh issue edit <N> --remove-label automation-crit --remove-label automation-high \
   --remove-label automation-medium --remove-label automation-low --remove-label automation-verify \
   --add-label deletion-proposed
-gh issue comment <N> --body "**Deletion proposed** (vision-strategist): <reason — duplicate of #M / off-scope / obsolete / stale / merged into #M>.
+gh issue comment <N> --body "**Deletion proposed** (vision-strategist): <reason — duplicate of #M / off-scope / obsolete / stale / merged into #M / goal-link-absent>.
 Evidence: <one line>.
 This issue is now invisible to the executor (no automation-* label). To resurrect: re-add an automation-* label. To confirm removal: close it."
 ```
+
+The Remove criteria (per `reference/grooming-criteria.md` Op 4) include
+the new **Goal-link-absent** criterion: when the project's vision-doc
+declares a "THE GOAL" anchor and a `type:code` issue body lacks the
+goal-link fields it enumerates (`Goal-link:`, output-deliverable,
+`Validation:`, `Done-when:`), soft-remove with reason
+`goal-link-absent` and the specific missing fields listed in the
+evidence line. The human triages: either fields get added (issue
+reinstated) or it's confirmed off-track (closed). This is the
+structural enforcement of the goal-link contract — without it, the
+orchestrator's Step 2b check just keeps skipping non-conforming
+issues without ever removing them from the queue.
 
 Never strip `automation-*` from an issue that has open dependents (it would
 falsely unblock them) — re-point or resolve those edges first.
@@ -260,14 +287,18 @@ changelog.
    <rendered report>
    EOF
    )"
-   gh issue comment <report#> --body "Groom pass <date>: <n reprioritized, n split, n combined, n deletion-proposed>. Meander index <x>."
+   gh issue comment <report#> --body "Groom pass <date>: <n reprioritized, n split, n combined, n deletion-proposed (incl. n goal-link-absent)>. Meander index <x>. Goal-output-shipped <n>/<total closed> this window."
    ```
 
 2. **Chat summary** (when run interactively). Print the report's two top
    sections only: **ACTION REQUIRED (human)** — the ranked list of human-gated
    items blocking the critical path (this is the "what do I need to do") — and
-   the **health line** (% complete, throughput, meander index, critical-path
-   head). Keep it scannable.
+   the **health line** (% complete, throughput, meander index,
+   goal-output-shipped, critical-path head). Keep it scannable. When the
+   project's vision-doc declares a "THE GOAL" anchor, ALSO print the
+   **goal-output coverage table** (per-deliverable row: deliverable
+   produced? validation evidence on file? attack-fixtures pass?) — this
+   is the at-a-glance answer to "how far from THE GOAL are we?"
 
 ## Step 5 — Stop (and optionally schedule)
 
