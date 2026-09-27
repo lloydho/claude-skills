@@ -3,8 +3,13 @@
   "owner": {
     "name": "Lloyd Ho"
   },
-  "description": "Personal Claude Code skills — agentic project orchestration.",
+  "description": "Lloyd Ho's shared Claude Code plugins: house writing and review rules, and autonomous project orchestration.",
   "plugins": [
+    {
+      "name": "house-rules",
+      "source": "./plugins/house-rules",
+      "description": "Shared writing-style and prompt-authoring skills plus read-only code and writing reviewer agents."
+    },
     {
       "name": "vision-orchestration",
       "source": "./plugins/vision-orchestration",

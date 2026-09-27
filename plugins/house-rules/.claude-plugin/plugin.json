@@ -1,0 +1,8 @@
+{
+  "name": "house-rules",
+  "description": "Shared writing and prompt rules plus read-only code and writing reviewer agents, for every project and collaborator.",
+  "author": {
+    "name": "Lloyd Ho"
+  },
+  "keywords": ["writing-style", "prompts", "code-review", "house-rules"]
+}

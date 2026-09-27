@@ -1,63 +1,83 @@
-# lloyd-skills — personal Claude Code marketplace
+# lloyd-skills — shared Claude Code marketplace
 
-A personal [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces)
-hosting one plugin, **`vision-orchestration`**, so the orchestration skills are
-reusable across all my projects — including in **Claude Code on the web** (cloud
-sessions clone the repo fresh and load plugins declared in a project's
-`.claude/settings.json`; personal `~/.claude/skills/` is NOT available there).
+A [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces)
+that carries the rules and skills my projects share, so every collaborator's agent
+gets the same version. This includes **Claude Code on the web**: cloud sessions clone
+the repo fresh and load plugins declared in a project's `.claude/settings.json`, but
+they can't see anyone's personal `~/.claude/`.
 
-## What's inside
+The repo is public, so collaborators need no GitHub access to install from it.
 
-`plugins/vision-orchestration/` bundles two skills:
+## Plugins
 
-- **vision-strategist** — the high-level orchestrator. Holds the whole vision +
-  whole backlog and grooms it: reprioritize, split giant tasks, combine small
-  ones, soft-remove dead ones; writes a standing report. Does not write code.
-- **vision-orchestrator** — the executor. Picks one top-eligible `automation-*`
-  issue per invocation, implements it via a worktree-isolated subagent, opens a
-  per-issue PR, records the outcome.
+### `house-rules`
 
-Both read the consuming project's `.claude/orchestrator-config.yml`.
+The rules every project follows, whichever org owns it.
+
+- **`house-rules:writing-style`**: the house style for any prose we ship, from UI
+  copy to commit messages. A repo's own `WRITING_STYLE.md`, `EDITING.md`, or copy
+  ban list overrides it.
+- **`house-rules:prompt-authoring`**: how to write and edit prompts a Claude model
+  runs.
+- **`code-reviewer`** (Opus) and **`writing-reviewer`** (Sonnet): read-only review
+  agents for code and prose.
+
+Project-specific rules still belong in each repo's `CLAUDE.md`. Plugins carry
+skills, agents, and hooks, but not `CLAUDE.md` text.
+
+### `vision-orchestration`
+
+Two-tier autonomous project orchestration over a GitHub-Issues backlog.
+
+- **`vision-strategist`** holds the whole vision and backlog and grooms it:
+  reprioritize, split giant tasks, combine small ones, soft-remove dead ones. It
+  writes a standing report and doesn't write code.
+- **`vision-orchestrator`** picks one top-eligible `automation-*` issue per
+  invocation, implements it through a worktree-isolated subagent, opens a per-issue
+  PR, and records the outcome.
+
+Both read the project's `.claude/orchestrator-config.yml`. Run
+`/vision-orchestration:vision-orchestrator init` to create one.
 
 ## Layout
 
 ```
-.claude-plugin/marketplace.json              # marketplace catalog (lists the plugin)
+.claude-plugin/marketplace.json        # catalog listing both plugins
+plugins/house-rules/
+├── .claude-plugin/plugin.json
+├── skills/writing-style/SKILL.md
+├── skills/prompt-authoring/SKILL.md
+└── agents/code-reviewer.md, agents/writing-reviewer.md
 plugins/vision-orchestration/
-├── .claude-plugin/plugin.json               # plugin manifest
-└── skills/
-    ├── vision-strategist/SKILL.md  (+ reference/, config.example.yml)
-    └── vision-orchestrator/SKILL.md (+ reference/, config.example.yml)
+├── .claude-plugin/plugin.json
+└── skills/vision-strategist/, skills/vision-orchestrator/
 ```
 
 ## Use it in a project
 
-Add to that project's `.claude/settings.json` (commit it so cloud sessions pick it up):
+Add this to the project's `.claude/settings.json` and commit it. Anyone who opens
+the repo and trusts the folder is prompted to install the plugins.
 
 ```json
 {
   "extraKnownMarketplaces": {
     "lloyd-skills": {
-      "source": { "source": "github", "repo": "lloydho/claude-skills" }
+      "source": { "source": "github", "repo": "lloydho/claude-skills" },
+      "autoUpdate": true
     }
   },
   "enabledPlugins": {
-    "vision-orchestration@lloyd-skills": true
+    "house-rules@lloyd-skills": true
   }
 }
 ```
 
-Then the skills are available as:
-
-- `/vision-orchestration:vision-strategist`
-- `/vision-orchestration:vision-orchestrator`
-
-Each project still needs its own `.claude/orchestrator-config.yml`
-(run `/vision-orchestration:vision-orchestrator init` to bootstrap one).
+Add `"vision-orchestration@lloyd-skills": true` only in projects that use the
+orchestration skills.
 
 ## Updating
 
-Edit the skills here and push. Projects pick up changes on their next session
-(the plugin re-resolves from this repo). Bump `plugins/vision-orchestration/.claude-plugin/plugin.json`
-`version` when you want an explicit release marker; omit/auto behavior tracks the
-commit SHA.
+Edit the files here and push. `house-rules` sets no `version`, so installs track
+the latest commit and pick up changes on their next marketplace update.
+`vision-orchestration` pins a `version`, so bump it in its `plugin.json` to release
+a change.
