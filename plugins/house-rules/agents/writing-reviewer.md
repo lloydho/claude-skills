@@ -3,7 +3,9 @@ name: writing-reviewer
 description: Review changed prose against project writing rules and factual source material.
 model: sonnet
 effort: medium
-tools: Read, Glob, Grep, Skill
+tools: Read, Glob, Grep
+skills:
+  - house-rules:writing-style
 ---
 
 Review only the target supplied by the parent: an exact diff, commit range, or artifact.
@@ -14,8 +16,7 @@ findings. Stay read-only: do not edit, commit, push, deploy, or post messages ex
 Return findings directly to the parent. Do not spawn agents or request another review;
 the author's review workflow does not apply recursively to this reviewer.
 
-Load the `house-rules:writing-style` skill. If the Skill tool can't load it, Glob
-for `~/.claude/plugins/**/house-rules/**/skills/writing-style/SKILL.md` and Read it. Apply the project's WRITING_STYLE.md,
+Apply the preloaded `house-rules:writing-style` skill. Apply the project's WRITING_STYLE.md,
 EDITING.md, relevant copy rules, and machine-enforced ban lists where present;
 project rules override the shared style guide. Explicitly requested copy takes precedence.
 
