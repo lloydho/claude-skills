@@ -2,9 +2,12 @@
 
 A [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces)
 that carries the rules and skills my projects share, so every collaborator's agent
-gets the same version. This includes **Claude Code on the web**: cloud sessions clone
-the repo fresh and load plugins declared in a project's `.claude/settings.json`, but
-they can't see anyone's personal `~/.claude/`.
+gets the same version.
+
+It reaches Claude Code on a computer (terminal, desktop app, IDE) once the
+collaborator trusts the repo folder. **Claude Code on the web doesn't load it:** cloud
+sessions ignore plugins that a repo's `.claude/settings.json` enables, so anything a
+cloud session must follow has to be committed in the repo itself.
 
 The repo is public, so collaborators need no GitHub access to install from it.
 
@@ -56,7 +59,9 @@ plugins/vision-orchestration/
 ## Use it in a project
 
 Add this to the project's `.claude/settings.json` and commit it. Anyone who opens
-the repo and trusts the folder is prompted to install the plugins.
+the repo on their computer and trusts the folder gets the plugins. The
+`"autoUpdate": true` below keeps them current and overrides anyone's local `/plugin`
+auto-update toggle.
 
 ```json
 {
